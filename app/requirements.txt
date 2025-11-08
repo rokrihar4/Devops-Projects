@@ -1,0 +1,6 @@
+Flask 
+jsonify
+os
+psycopg2
+redis
+gunicorn

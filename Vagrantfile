@@ -21,29 +21,29 @@ Vagrant.configure("2") do |config|
     ubuntu.vm.box = "ubuntu/jammy64"
     ubuntu.vm.hostname = "ubuntu"
     ubuntu.vm.network "private_network", ip: UBUNTU_IP
-
-    ubuntu.vm.provider "virtualbox" do |vb|
-      vb.memory = 1024
-      vb.cpus = 2
-    end
-
     ubuntu.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1", auto_correct: true
 
-    ubuntu.vm.provision "shell", inline: <<-SHELL
-      set -eu
-      if ! grep -q "^#{DEBIAN_IP}\\s\\+debian\\b" /etc/hosts; then
-        echo "#{DEBIAN_IP} debian" | sudo tee -a /etc/hosts
-      fi
+    ubuntu.vm.provider "virtualbox" do |vb|
+      vb.memory = 8192
+      vb.cpus = 4
+    end
+
+    ubuntu.vm.provision "shell", path: "provision/provision.sh"
+
+    # ubuntu.vm.provision "shell", inline: <<-SHELL
+    #   # set -eu
+    #   # if ! grep -q "^#{DEBIAN_IP}\\s\\+debian\\b" /etc/hosts; then
+    #   #   echo "#{DEBIAN_IP} debian" | sudo tee -a /etc/hosts
+    #   # fi
       
-      sudo apt install -y nginx
-      sudo systemctl start nginx
-      sudo systemctl enable --now nginx
+    #   sudo apt install -y nginx
+    #   sudo systemctl start nginx
+    #   sudo systemctl enable --now nginx
 
-      sudo mkdir -p /usr/share/nginx/html/demo
-      sudo rm -rf /var/www/html/index.nginx-debian.html
-      sudo cp /vagrant/index.html /var/www/html
-
-    SHELL
+    #   sudo mkdir -p /usr/share/nginx/html/demo
+    #   sudo rm -rf /var/www/html/index.nginx-debian.html
+    #   sudo cp /vagrant/index.html /var/www/html
+    # SHELL
 
   end
 
