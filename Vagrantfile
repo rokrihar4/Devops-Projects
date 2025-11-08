@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
       sudo systemctl enable --now nginx
 
       sudo mkdir -p /usr/share/nginx/html/demo
-      sudo rm -rf 
+      sudo rm -rf /var/www/html/index.nginx-debian.html
       sudo cp /vagrant/index.html /var/www/html
 
     SHELL
