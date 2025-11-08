@@ -1,6 +1,4 @@
 Flask 
-jsonify
-os
-psycopg2
+psycopg2-binary
 redis
 gunicorn

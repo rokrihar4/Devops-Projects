@@ -46,25 +46,26 @@ Vagrant.configure("2") do |config|
     # SHELL
 
   end
+ 
+  # --------------------- DEBIAN -------------------------------
+  # config.vm.define "debian" do |debian|
+  #   debian.vm.box = "debian/bookworm64"
+  #   debian.vm.hostname = "debian"
+  #   debian.vm.network "private_network", ip: DEBIAN_IP
 
-  config.vm.define "debian" do |debian|
-    debian.vm.box = "debian/bookworm64"
-    debian.vm.hostname = "debian"
-    debian.vm.network "private_network", ip: DEBIAN_IP
+  #   debian.vm.provider "virtualbox" do |vb|
+  #     vb.memory = 1024
+  #     vb.cpus = 1
+  #   end
 
-    debian.vm.provider "virtualbox" do |vb|
-      vb.memory = 1024
-      vb.cpus = 1
-    end
+  #   debian.vm.provision "shell", inline: <<-SHELL
+  #     set -eu
+  #     if ! grep -q "^#{UBUNTU_IP}\\s\\+ubuntu\\b" /etc/hosts; then
+  #       echo "#{UBUNTU_IP} ubuntu" | sudo tee -a /etc/hosts
+  #     fi
+  #   SHELL
 
-    debian.vm.provision "shell", inline: <<-SHELL
-      set -eu
-      if ! grep -q "^#{UBUNTU_IP}\\s\\+ubuntu\\b" /etc/hosts; then
-        echo "#{UBUNTU_IP} ubuntu" | sudo tee -a /etc/hosts
-      fi
-    SHELL
-
-  end
+  # end
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
