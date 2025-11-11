@@ -7,7 +7,7 @@ User=www-data
 Group=www-data
 EnvironmentFile=/etc/myapp/app.env
 WorkingDirectory=/opt/myapp
-ExecStart=/opt/myapp/.venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
+ExecStart=/opt/venvs/myapp/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
 Restart=always
 
 [Install]

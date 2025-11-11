@@ -28,6 +28,9 @@ Vagrant.configure("2") do |config|
       vb.cpus = 4
     end
 
+    ubuntu.vm.synced_folder "./frontend/dist", "/var/www/html/react"
+    ubuntu.vm.synced_folder "./app", "/opt/myapp"
+
     ubuntu.vm.provision "shell", path: "provision/provision.sh"
 
     # ubuntu.vm.provision "shell", inline: <<-SHELL
