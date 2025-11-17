@@ -1,4 +1,4 @@
-# To je samo backup ker trenutni prvision.sh rad koruptira originalen app.py
+# To je samo backup ker prvision.sh rad koruptira originalen app.py
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os, psycopg2, redis

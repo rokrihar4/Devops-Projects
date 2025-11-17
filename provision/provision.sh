@@ -47,7 +47,6 @@ sudo -u vagrant python3 -m venv /opt/venvs/myapp
 sudo -u vagrant /opt/venvs/myapp/bin/pip install -U pip setuptools wheel
 sudo -u vagrant /opt/venvs/myapp/bin/pip install -r /opt/myapp/requirements.txt
 
-
 # 6) Systemd service za gunicorn
 #   V tvojem app.service se očitno referencira /usr/bin/gunicorn,
 #   tu ga prepišemo na venv gunicorn:
@@ -71,5 +70,5 @@ sudo systemctl reload nginx
 
 # 8) Health-check preko Nginx → Flask → Redis/Postgres
 curl -fsS http://127.0.0.1/api/message >/dev/null \
-  && echo "App reachable via Nginx." \
-  || echo "App responded non-200, but Nginx is up."
+  && echo "App dela čez nginx." \
+  || echo "Use zagnal sam ni html 200 response"
