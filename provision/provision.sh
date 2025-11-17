@@ -30,6 +30,7 @@ sudo chown -R www-data:www-data /opt/venvs
 sudo -u www-data /usr/bin/python3 -m venv /opt/venvs/myapp
 sudo -u www-data /opt/venvs/myapp/bin/pip install -U pip setuptools wheel
 sudo -u www-data /opt/venvs/myapp/bin/pip install -r /opt/myapp/requirements.txt
+# sudo pip3 install -r requirments.txt
 
 sudo sed -i 's#/usr/bin/gunicorn#/opt/myapp/.venv/bin/gunicorn#' /vagrant/provision/app.service
 
@@ -38,6 +39,8 @@ sudo mkdir -p /var/www/html/react
 sudo nginx -t
 sudo systemctl enable --now nginx
 #sudo rm -rf /var/www/html/index.nginx-debian.html
+
+# sudo python3 flash run
 
 sudo mkdir -p /etc/myapp
 sudo cp /vagrant/provision/app.env /etc/myapp/app.env
