@@ -1,21 +1,19 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [msg, setMsg] = useState("…loading…");
+  const [msg, setMsg] = useState('…loading…')
 
   useEffect(() => {
-    fetch("/api/message")
+    fetch('/api/message')
       .then(r => r.json())
       .then(d => setMsg(d.message))
-      .catch(() => setMsg("Failed to load"));
-  }, []);
+      .catch(() => setMsg('Failed to load'))
+  }, [])
 
   return (
-    <main style={{ fontFamily: "system-ui", padding: 24 }}>
-      <h1>{msg}</h1>
+    <main style={{ fontFamily: 'system-ui', padding: 24 }}>
+      <h1>{msg} :)</h1>
     </main>
   )
 }

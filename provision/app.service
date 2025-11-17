@@ -3,8 +3,8 @@ Description=Gunicorn for Flask app
 After=network.target
 
 [Service]
-User=www-data
-Group=www-data
+User=vagrant
+Group=vagrant
 EnvironmentFile=/etc/myapp/app.env
 WorkingDirectory=/opt/myapp
 ExecStart=/opt/venvs/myapp/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
