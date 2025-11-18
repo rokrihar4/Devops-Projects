@@ -2,8 +2,6 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import os, psycopg2, redis
 
-
-
 app = Flask(__name__)
 CORS(app)
 DB_DSN = os.getenv("DB_DSN", "dbname=demo user=demo password=demo host=127.0.0.1")
