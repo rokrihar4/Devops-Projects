@@ -2,6 +2,8 @@ param(
   [string]$Name = "myapp"
 )
 
+multipass set local.mounts.enable=true
+
 # 1. Ustvari VM + mounta kode in frontenda
 multipass launch jammy `
   --name $Name `
