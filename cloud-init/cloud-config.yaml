@@ -1,97 +1,108 @@
 #cloud-config
 package_update: true
+package_upgrade: false
+
 packages:
   - nginx
-  - python3-pip
+  - python3
   - python3-venv
+  - python3-pip
   - postgresql
   - redis-server
+  - rsync
+  - curl
 
 write_files:
-  - path: /opt/myapp/app.py
-    permissions: '0644'
-    owner: www-data:www-data
-    content: |
-      from flask import Flask, jsonify
-      import os, psycopg2, redis
-      app = Flask(__name__)
-      DB_DSN = os.getenv("DB_DSN", "dbname=demo user=demo password=demo host=127.0.0.1")
-      REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
-      r = redis.from_url(REDIS_URL)
-      def db_now():
-          conn = psycopg2.connect(DB_DSN)
-          cur = conn.cursor()
-          cur.execute("SELECT now()")
-          val = cur.fetchone()[0]
-          cur.close(); conn.close()
-          return val
-      @app.route("/")
-      def index():
-          hits = r.incr("hits")
-          return jsonify({"message":"Hello from Flask via Nginx + Gunicorn","hits":hits,"db_time":str(db_now())})
-      if __name__ == "__main__":
-          app.run(host="0.0.0.0", port=5000)
-
-  - path: /opt/myapp/requirements.txt
-    permissions: '0644'
-    owner: www-data:www-data
-    content: |
-      flask==3.0.0
-      gunicorn==21.2.0
-      psycopg2-binary==2.9.9
-      redis==5.0.1
-
   - path: /etc/myapp/app.env
     permissions: '0644'
-    owner: root:root
     content: |
       DB_DSN=dbname=demo user=demo password=demo host=127.0.0.1
       REDIS_URL=redis://127.0.0.1:6379/0
 
-  - path: /etc/nginx/sites-available/default
-    permissions: '0644'
-    owner: root:root
-    content: |
-      server {
-        listen 80 default_server;
-        listen [::]:80 default_server;
-        root /var/www/html;
-        index index.html;
-        location / {
-          proxy_pass http://127.0.0.1:5000;
-          proxy_set_header Host $host;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-      }
-
   - path: /etc/systemd/system/app.service
     permissions: '0644'
-    owner: root:root
     content: |
       [Unit]
       Description=Gunicorn for Flask app
       After=network.target
+
       [Service]
-      User=www-data
-      Group=www-data
+      User=ubuntu
+      Group=ubuntu
       EnvironmentFile=/etc/myapp/app.env
       WorkingDirectory=/opt/myapp
-      ExecStart=/opt/myapp/.venv/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
+      ExecStart=/opt/venvs/myapp/bin/gunicorn --workers 2 --bind 127.0.0.1:5000 app:app
       Restart=always
+
       [Install]
       WantedBy=multi-user.target
 
-runcmd:
-  # Poskrbi, da se runcmd izvede po paketih (package_update/packages sta nad tem blokom)
-  - [ bash, -lc, "sudo -u www-data python3 -m venv /opt/myapp/.venv" ]
-  - [ bash, -lc, "/opt/myapp/.venv/bin/pip install -U pip" ]
-  - [ bash, -lc, "/opt/myapp/.venv/bin/pip install -r /opt/myapp/requirements.txt" ]
-  - [ bash, -lc, "sudo -u postgres psql -tc \"SELECT 1 FROM pg_database WHERE datname='demo'\" | grep -q 1 || sudo -u postgres createdb demo" ]
-  - [ bash, -lc, "sudo -u postgres psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='demo'\" | grep -q 1 || sudo -u postgres psql -c \"CREATE USER demo WITH PASSWORD 'demo';\"" ]
-  - [ bash, -lc, "sudo -u postgres psql -c \"GRANT ALL PRIVILEGES ON DATABASE demo TO demo\"" ]
-  - [ systemctl, enable, --now, redis-server ]
-  - [ systemctl, enable, --now, nginx ]
-  - [ systemctl, daemon-reload ]
-  - [ systemctl, enable, --now, app ]
+  - path: /etc/nginx/sites-available/default
+    permissions: '0644'
+    content: |
+      server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
 
-final_message: "Cloud-init: stack is up. Try curl http://<ip>/"
+        root /var/www/html/react;
+        index index.html;
+
+        location /api/ {
+          proxy_pass http://127.0.0.1:5000;
+          proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+
+        location / {
+          try_files $uri /index.html;
+        }
+      }
+
+runcmd:
+  # Create dirs
+  - mkdir -p /opt/myapp
+  - mkdir -p /opt/venvs
+  - mkdir -p /var/www/html/react
+
+  # Ensure ownership (for mounts and venv)
+  - chown ubuntu:ubuntu /opt/myapp /opt/venvs /var/www/html/react
+
+  # Setup Python venv
+  - sudo -u ubuntu python3 -m venv /opt/venvs/myapp
+  - sudo -u ubuntu /opt/venvs/myapp/bin/pip install -U pip setuptools wheel
+
+  # Install app requirements once mount is ready
+  - |
+      echo "=== Waiting for /opt/myapp/requirements.txt ==="
+      for i in {1..30}; do
+        if [ -f /opt/myapp/requirements.txt ]; then
+          echo "Found requirements.txt, installing..."
+          sudo -u ubuntu /opt/venvs/myapp/bin/pip install -r /opt/myapp/requirements.txt
+          exit 0
+        fi
+        echo "requirements.txt not found yet, retrying in 2s..."
+        sleep 2
+      done
+      echo "WARNING: requirements.txt not found after 60s – skipping install"
+
+  # Configure PostgreSQL: db, user, table, sample data, grants
+  - sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='demo'" | grep -q 1 || sudo -u postgres createdb demo
+  - sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='demo'" | grep -q 1 || sudo -u postgres psql -c "CREATE USER demo WITH PASSWORD 'demo';"
+  - sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE demo TO demo"
+  - sudo -u postgres psql -d demo -c "CREATE TABLE IF NOT EXISTS items (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, created_at TIMESTAMPTZ DEFAULT NOW());"
+  - sudo -u postgres psql -d demo -c "INSERT INTO items (name, description) VALUES ('The first one','Created by cloud-init'),('Second one','Also from cloud-init') ON CONFLICT DO NOTHING;"
+  - sudo -u postgres psql -d demo -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO demo;"
+  - sudo -u postgres psql -d demo -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO demo;"
+
+  # Redis tuning
+  - echo 'vm.overcommit_memory=1' | tee /etc/sysctl.d/99-redis.conf
+  - sysctl -p /etc/sysctl.d/99-redis.conf || true
+  - systemctl enable --now redis-server
+
+  # Enable app service
+  - systemctl daemon-reload
+  - systemctl enable --now app
+
+  # Reload nginx
+  - nginx -t
+  - systemctl reload nginx
