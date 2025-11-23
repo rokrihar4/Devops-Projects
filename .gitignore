@@ -13,7 +13,4 @@ node_modules/
 venv/
 .env
 
-# Ignore build outputs
-build/
-
 .vagrant
