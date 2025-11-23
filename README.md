@@ -29,7 +29,7 @@ Both approaches build the same stack:
 - **PostgreSQL** — relational database  
 - **Redis** — caching and hit counter service  
 
-Everything lives in a reproducible Git repository and can be deployed end-to-end with a single command (`vagrant up` or `multipass launch --cloud-init`).
+Everything lives in a reproducible Git repository and can be deployed end-to-end with a single command (`vagrant up` for vagrant or run script `./setup-myapp.ps1` for cloud-init).
 
 ### Prerequisites
 
