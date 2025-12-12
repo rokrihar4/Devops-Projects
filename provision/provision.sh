@@ -31,10 +31,11 @@ sudo systemctl enable --now redis-server
 sudo -u postgres -H psql -tc "SELECT 1 FROM pg_database WHERE datname='demo'" | grep -q 1 || sudo -u postgres createdb demo
 sudo -u postgres -H psql -tc "SELECT 1 FROM pg_roles WHERE rolname='demo'" | grep -q 1 || sudo -u postgres psql -c "CREATE USER demo WITH PASSWORD 'demo';"
 sudo -u postgres -H psql -c "GRANT ALL PRIVILEGES ON DATABASE demo TO demo"
+
 sudo -u postgres psql -d demo <<'SQL'
 CREATE TABLE IF NOT EXISTS items (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     description TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -43,8 +44,9 @@ INSERT INTO items (name, description)
 VALUES
     ('The first one', 'Created by provision.sh'),
     ('Second one', 'Also from provision.sh')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
 SQL
+
 sudo -u postgres psql -d demo -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO demo;"
 sudo -u postgres psql -d demo -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO demo;"
 

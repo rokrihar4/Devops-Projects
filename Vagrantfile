@@ -21,7 +21,7 @@ Vagrant.configure("2") do |config|
     ubuntu.vm.box = "ubuntu/jammy64"
     ubuntu.vm.hostname = "ubuntu"
     ubuntu.vm.network "private_network", ip: UBUNTU_IP
-    ubuntu.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1", auto_correct: true
+    ubuntu.vm.network "forwarded_port", guest: 80, host: 8081, host_ip: "127.0.0.1", auto_correct: true
 
     ubuntu.vm.provider "virtualbox" do |vb|
       vb.memory = 8192

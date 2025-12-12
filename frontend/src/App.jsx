@@ -3,10 +3,10 @@ import './App.css'
 
 function App() {
   const [msg, setMsg] = useState('…loading…')
-  const [demos, setDemo] = useState([])
   const [hits, setHits] = useState(null)
-  const [items, setItems] = useState([])
-  const [text, setText] = useState("")   // <-- added this
+
+  const [items, setItems] = useState([])     // DB items: [{id,name,description,...}]
+  const [text, setText] = useState("")
 
   useEffect(() => {
     fetch('/api/message')
@@ -20,39 +20,48 @@ function App() {
         setHits(null)
       })
 
-    fetch('/api/dbdemo')
-      .then(r => r.json())
-      .then(d => setDemo(d))
-      .catch(() =>
-        setDemo([{ id: 0, name: 'Failed to load', description: 'Error' }])
-      )
+    loadItems()
   }, [])
 
-  function addItem() {
-    if (!text.trim()) return // ignore empty entries
-    setItems([...items, text])
+  function loadItems() {
+    fetch('/api/items')
+      .then(r => r.json())
+      .then(setItems)
+      .catch(() => setItems([]))
+  }
+
+  async function addItem() {
+    const name = text.trim()
+    if (!name) return
+
+    const res = await fetch('/api/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, description: '' })
+    })
+
+    if (!res.ok) return
+
+    const created = await res.json()
+    setItems([...items, created])
     setText("")
   }
 
-  function removeItem(index) {
-    setItems(items.filter((_, i) => i !== index))
+  async function removeItem(id) {
+    const res = await fetch(`/api/items/${id}`, { method: 'DELETE' })
+    if (!res.ok) return
+    setItems(items.filter(x => x.id !== id))
   }
 
   return (
     <main style={{ fontFamily: 'system-ui', padding: 24 }}>
-      <h1>{msg} :)</h1>
+    
+      <h1>Checky - checklist app</h1>
 
+      <p>{msg} :)</p>
       <p style={{ color: 'green' }}>
         Redis says you've visited this page {hits} times :)
       </p>
-
-      <div>
-        {demos.map(item => (
-          <div key={item.id}>
-            <strong>{item.name}</strong> — {item.description}
-          </div>
-        ))}
-      </div>
 
       <div style={{ fontFamily: "sans-serif", width: 300, margin: "2rem auto" }}>
         <h2>Todo List</h2>
@@ -69,11 +78,11 @@ function App() {
         </button>
 
         <ul>
-          {items.map((item, i) => (
-            <li key={i}>
-              {item}
+          {items.map((item) => (
+            <li key={item.id}>
+              {item.name}
               <button
-                onClick={() => removeItem(i)}
+                onClick={() => removeItem(item.id)}
                 style={{ marginLeft: "0.5rem" }}
               >
                 ✕
