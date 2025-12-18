@@ -48,7 +48,7 @@ function App() {
       <h1>Checky - checklist app</h1>
 
       <p style={{ color: 'green' }}>
-        Redis says you've visited this page {hits} times :)
+        Redis says this site has been visited {hits} times 😁
       </p>
 
       <div style={{ fontFamily: "sans-serif", width: 300, margin: "2rem auto" }}>
