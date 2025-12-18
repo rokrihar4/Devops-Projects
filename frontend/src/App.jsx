@@ -9,17 +9,6 @@ function App() {
   const [text, setText] = useState("")
 
   useEffect(() => {
-    fetch('/api/message')
-      .then(r => r.json())
-      .then(d => {
-        setMsg(d.message)
-        setHits(d.hits)
-      })
-      .catch(() => {
-        setMsg('Failed to load')
-        setHits(null)
-      })
-
     loadItems()
   }, [])
 
@@ -58,7 +47,6 @@ function App() {
     
       <h1>Checky - checklist app</h1>
 
-      <p>{msg} :)</p>
       <p style={{ color: 'green' }}>
         Redis says you've visited this page {hits} times :)
       </p>
@@ -90,6 +78,19 @@ function App() {
             </li>
           ))}
         </ul>
+
+        <p
+          style={{
+            position: 'fixed',
+            bottom: '10px',
+            right: '10px',
+            fontSize: '12px',
+            opacity: 0.7,
+          }}
+        >
+          Made by Rok Rihar and Tone Pivk
+        </p>
+
       </div>
     </main>
   )
