@@ -9,6 +9,17 @@ function App() {
   const [text, setText] = useState("")
 
   useEffect(() => {
+    fetch('/api/message')
+      .then(r => r.json())
+      .then(d => {
+        setMsg(d.message)
+        setHits(d.hits)
+      })
+      .catch(() => {
+        setMsg('Failed to load')
+        setHits(null)
+      })
+
     loadItems()
   }, [])
 
@@ -45,10 +56,10 @@ function App() {
   return (
     <main style={{ fontFamily: 'system-ui', padding: 24 }}>
     
-      <h1>Checky - checklist app</h1>
+      <h1>Checky - simple checklist app</h1>
 
       <p style={{ color: 'green' }}>
-        Redis says this site has been visited {hits} times 😁
+        Redis says you've visited this page {hits} times :)
       </p>
 
       <div style={{ fontFamily: "sans-serif", width: 300, margin: "2rem auto" }}>
@@ -84,13 +95,13 @@ function App() {
             position: 'fixed',
             bottom: '10px',
             right: '10px',
+            color: 'green',
             fontSize: '12px',
             opacity: 0.7,
           }}
         >
           Made by Rok Rihar and Tone Pivk
         </p>
-
       </div>
     </main>
   )
