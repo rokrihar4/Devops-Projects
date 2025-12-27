@@ -58,7 +58,7 @@ function App() {
     
       <h1>Checky - simple checklist app</h1>
 
-      <p style={{ color: 'blue' }}>
+      <p style={{ color: 'green' }}>
         Redis says you've visited this page {hits} times :)
       </p>
 
