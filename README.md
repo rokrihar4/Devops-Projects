@@ -1,106 +1,175 @@
-# DevOps Project – Vagrant & Cloud-init Application Stack  
-Made by: Rok Rihar and Tone Pivk
+# DevOps Project – Automated Docker Application Stack
+
+**Authors:** Rok Rihar and Tone Pivk
 
 <p align="center">
-  <img src="screenshots/working.png" alt="Final result" width="900">
+  <img src="screenshots/Nov_dizajn.png" alt="Final result" width="900">
 </p>
-
-The screenshot shows the fully working application stack.  
-The main title confirms that the backend (Flask, Gunicorn, Nginx) is running.  
-The green text confirms Redis connectivity.  
+The screenshot shows the fully working application stack.
+The main title confirms that the backend (Flask, Gunicorn, Nginx) is running.
+The green text confirms Redis connectivity.
 The list below shows data coming from the PostgreSQL database.
+
+Video showing deployment of app-stack can be seen here: https://youtu.be/Y4V5QhtVgHY
 
 ---
 
 ## Project Overview
 
-This project implements a complete Linux-based application stack using **Infrastructure as Code** principles.
+This project demonstrates a **fully automated, containerized application stack** built according to DevOps best practices.
 
-Two automated deployment methods are provided:
+The application is a **simple Todo List web application**, consisting of a React frontend and a Flask backend, backed by PostgreSQL and Redis.  
+The entire stack is deployed using **Docker Compose**, with container images automatically built and published using **GitHub Actions CI/CD**.
 
-- **Vagrant + shell provisioning** (local VirtualBox VM)
-- **Cloud-init** (cloud-friendly provisioning, tested with Multipass)
+The goal of this project is to showcase:
+- Infrastructure as Code
+- Multi-container orchestration
+- Automated image builds using BuildX
+- CI/CD pipelines
+- Secure deployment using TLS
 
-Both approaches build the same stack:
+---
 
-- **Nginx** — reverse proxy and static file server  
-- **React (Vite)** — frontend single-page application served by Nginx  
-- **Flask + Gunicorn** — backend API  
-- **PostgreSQL** — relational database  
-- **Redis** — caching and hit counter service  
+## Application Features
 
-Everything lives in a reproducible Git repository and can be deployed end-to-end with a single command (`vagrant up` for vagrant or run script `./setup-myapp.ps1` for cloud-init).
-
-### Prerequisites
-
-- **VirtualBox**
-- **Vagrant**
-- **Node.js + npm** (to build the React frontend)
-- **Git**
+- Add and view todo items
+- Persistent storage using PostgreSQL
+- Request counters and caching using Redis
+- REST API backend
+- Single-page application frontend
+- Reverse proxy and TLS termination using Nginx
 
 ---
 
 ## Architecture
 
-### Components
+### Services / Containers
 
-- **Frontend (`frontend/`)**  
-  - React application built with Vite.  
-  - The production build (`dist/`) is synced into the VM and served from `/var/www/html/react`.  
-  - Communicates with the backend via:
-    - `GET /api/message`
-    - `GET /api/dbdemo`
+The stack consists of **five different services**:
 
-- **Backend (`app/app.py`)**  
-  - Flask API wrapped with Gunicorn.  
-  - Listens internally on `127.0.0.1:5000`.  
-  - Endpoints:
-    - `/api/message`: returns greeting, Redis hit counter, DB timestamp  
-    - `/api/dbdemo`: returns rows from the `items` table  
-  - Configured through environment variables:
-    - `DB_DSN`
-    - `REDIS_URL`
+| Service     | Description |
+|------------|------------|
+| **frontend** | React (Vite) SPA |
+| **backend**  | Flask API served by Gunicorn |
+| **nginx**    | Reverse proxy + TLS |
+| **postgres** | PostgreSQL database |
+| **redis**    | Caching and counters |
 
-- **PostgreSQL**  
-  - Database: `demo`  
-  - User: `demo` / password: `demo`  
-  - Table `items` with demo entries created during provisioning.
-
-- **Redis**  
-  - Handles request counters:
-    - `hits`
-    - `dbdemo_hits`
-
-- **Nginx**  
-  - Serves the React SPA.  
-  - Proxies `/api/` to Gunicorn at `127.0.0.1:5000`.
+All services are orchestrated using **Docker Compose**.
 
 ---
 
-## Repository Structure
+## Technology Stack
 
-```text
-Devops-Projects/
-├── .gitattributes
-├── .gitignore
-├── README.md                 # Project documentation
-├── Vagrantfile               # Vagrant definition for the Ubuntu VM
-├── setup-myapp.ps1           # Windows helper script
-│
-├── app/                      # Flask backend
-│   ├── app.py
-│   ├── requirements.txt
-│   └── venv/                 # Local development venv (ignored in provisioning)
-│
-├── frontend/                 # React/Vite frontend
-│   ├── src/...
-│   └── dist/                 # Production build served by Nginx
-│
-├── provision/                # Vagrant provisioning files
-│   ├── provision.sh          # Main provisioning script
-│   ├── app.env               # Backend environment variables
-│   ├── app.service           # Gunicorn systemd unit
-│   └── nginx-default.conf    # Nginx site configuration
-│
-└── cloud-init/               # Cloud-init deployment
-    └── user-data.yaml        # Full cloud-config to deploy the same stack
+- **Frontend:** React + Vite
+- **Backend:** Python (Flask, Gunicorn)
+- **Database:** PostgreSQL 16
+- **Cache:** Redis
+- **Reverse Proxy:** Nginx
+- **Containerization:** Docker, Docker Compose
+- **CI/CD:** GitHub Actions + Docker BuildX
+- **Container Registry:** GitHub Container Registry (GHCR)
+- **TLS:** Nginx with certificates
+
+---
+
+## Docker Compose
+
+The application stack is started with a single command:
+
+```bash
+docker compose up -d
+```
+
+## Docker Compose Architecture
+
+Docker Compose is used to orchestrate the entire application stack and handles:
+
+- Service networking
+- Dependency ordering
+- Volume mounting
+- Port exposure
+- Persistent storage (volumes)
+
+### Persistent Volumes
+
+The following Docker volumes are used:
+
+| Volume name | Purpose |
+|------------|--------|
+| `db-data` | PostgreSQL data persistence |
+| `redis-data` | Redis data persistence |
+
+This ensures that application data **survives container restarts and upgrades**.
+
+---
+
+## Custom Docker Images & Multi-Stage Builds
+
+Both the **backend** and **frontend** are built as **custom Docker images** using **multi-stage Dockerfiles** to minimize image size and improve security.
+
+### Backend Image
+
+- **Builder stage**
+  - Installs Python dependencies
+- **Final stage**
+  - Uses a minimal base image
+  - Runs Flask via **Gunicorn**
+  - Exposes only required runtime files
+
+### Frontend Image
+
+- **Builder stage**
+  - Runs `npm install`
+  - Builds production assets using `npm run build`
+- **Final stage**
+  - Uses **Nginx** to serve static files
+  - Contains only compiled frontend assets
+
+This approach keeps production images **small, fast, and secure**, following Docker best practices.
+
+---
+
+## CI/CD Pipeline (GitHub Actions)
+
+Container image building and publishing is **fully automated** using **GitHub Actions**.
+
+### Workflow Highlights
+
+The CI/CD workflow is triggered on:
+
+- Push to the `main` branch
+- Git tags matching `v*.*.*`
+
+The workflow uses:
+
+- `docker/setup-buildx-action`
+- `docker/metadata-action`
+- `docker/build-push-action`
+
+### Published Images
+
+Images are built and published to **GitHub Container Registry (GHCR)**:
+
+- `ghcr.io/rokrihar4/devops-backend`
+- `ghcr.io/rokrihar4/devops-frontend`
+
+### CI/CD Statement
+
+> CI/CD workflow is based on the GitHub Actions lab exercise using **GHCR** and **Docker BuildX**.
+
+This project **does not automatically deploy** new images to production.
+
+### Deployment Flow
+
+1. Code is pushed to GitHub
+2. GitHub Actions builds and publishes container images
+3. Target machine pulls the latest images
+4. Docker Compose recreates the containers
+
+### Manual Deployment Example
+
+```bash
+docker compose pull
+docker compose up -d --force-recreate
+```
