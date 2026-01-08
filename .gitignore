@@ -14,3 +14,7 @@ venv/
 .env
 
 .vagrant
+
+# TLS / SSL certs
+docker/nginx/certs/
+docker/nginx/certs/*
